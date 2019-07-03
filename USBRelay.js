@@ -1,0 +1,100 @@
+'use strict';
+
+var HID = require('node-hid');
+
+class USBRelay
+{
+    static get Relays()
+    {
+        const devices = HID.devices();
+        const connectedRelays = devices.filter(device => {
+                return device.product.indexOf("USBRelay") !== -1;
+        });
+        return connectedRelays;
+    }
+        
+    constructor(devicePath)
+    {
+        if (typeof devicePath === 'undefined')
+        {
+                // Device path was not provided, so let's select the first connected device.
+                const devices = HID.devices();
+                const connectedRelays = devices.filter(device => {
+                        return device.product.indexOf("USBRelay") !== -1;
+                });
+                if (!connectedRelays.length) {
+                        throw new Error('No USB Relays are connected.');
+                }
+                this.device = new HID.HID(connectedRelays[0].path);
+        }
+        else
+        {
+            this.device = new HID.HID(devicePath);
+        }
+    }
+    
+    getState(relayNumber)
+    {       
+        let status = this.device.getFeatureReport(0x00, 0x10)[7];
+        // 1 = relay 1, 2 = relay 2, 3 = both relays
+        console.log(status);
+        if ((status === relayNumber) || (status === 3))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        
+        //return this.device.getFeatureReport(relayBytes[relayNumber], 0x10)[8] !== 0 ? true : false;
+    }
+    
+    setState(relayNumber, state)
+    {
+        // Byte 0 = Report ID
+        // Byte 1 = State
+        // Byte 2 = Relay
+        // Bytes 3-8 = Padding
+
+        // index 0 turns all the relays on or off
+        var relayOn = [
+            [0x00, 0xFE, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFF, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFF, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFF, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFF, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFF, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFF, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFF, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFF, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        ];
+
+        var relayOff = [
+            [0x00, 0xFC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFD, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFD, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFD, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFD, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFD, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFD, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFD, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00],
+            [0x00, 0xFD, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        ];
+
+        var command = null;
+
+        if (state)
+        {
+            command = relayOn[relayNumber];
+        }
+        else
+        {
+            command = relayOff[relayNumber];
+        }
+
+        this.device.sendFeatureReport(command);
+    }   
+}
+
+module.exports = USBRelay;

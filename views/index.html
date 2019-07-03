@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Shade Controller</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+            function shadesUp()
+            {
+                commandSender = document.getElementById("commandSender");
+                commandSender.src = "/shades_up";
+            }
+            
+            function shadesDown()
+            {
+                commandSender = document.getElementById("commandSender");
+                commandSender.src = "/shades_down";
+            }
+        </script>
+    </head>
+    <body>
+        <div><b>Shade Controller</b></div>
+        <br /><br />
+        <button id="btnShadesUp" onClick="shadesUp();">Shades Up</button>
+        <br /><br />
+        <button id="btnShadesDown" onClick="shadesDown();">Shades Down</button>
+        <iframe id="commandSender" style="display:none;"></iframe>
+    </body>
+</html>
